@@ -1,0 +1,31 @@
+/* ==========================================================================
+Mixins
+========================================================================== */
+
+/* ==========================================================================
+Extend
+========================================================================== */
+
+%transition { transition: all .3s }
+
+%text-ucfirst {
+	display: inline-block;
+	text-transform: lowercase;
+
+	&::first-letter { text-transform: capitalize }
+}
+
+%text-trim {
+	text-overflow: ellipsis;
+	overflow: hidden auto;
+	white-space: nowrap;
+}
+
+%text-sub {
+	word-break: break-word;
+	color: var(--color-foreground-secondary);
+	font-size: .85em;
+	font-weight: 400;
+}
+
+%text-lg { font-size: 2em }

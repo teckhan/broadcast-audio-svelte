@@ -1,0 +1,70 @@
+*, *:before, *:after {
+	box-sizing: border-box;
+	-webkit-overflow-scrolling: touch;
+}
+
+html {
+	-webkit-touch-callout:none;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
+	text-shadow: none;
+}
+
+a:link, a:visited, a:hover, a:active {
+	cursor: pointer;
+	text-decoration: none;
+}
+
+a:link, a:visited {
+	color: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	font-weight: inherit;
+	font-style: inherit;
+	font-size: 100%;
+	font-family: inherit;
+	vertical-align: baseline;
+}
+
+a, button, input[type="button"],
+i, .material-icons {
+	user-select: none;
+}
+
+// body .material-icons {
+// 	$scale: 2;
+
+// 	margin: -(1em * $scale - 1em) / 2 / $scale;
+// 	font-size: 1em * $scale;
+// 	vertical-align: middle;
+
+// 	img {
+// 		height: 1em;
+// 		width: auto
+// 	}
+
+// 	&[data-css-size="lg"] {
+// 		$scale: 2.5;
+
+// 		margin: -(1em * $scale - 1em) / 2 / $scale;
+// 		font-size: 1em * $scale;
+// 	}
+// }
+
+ul, ol, li {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+input[type="button"], input[type="submit"], [onclick] { cursor: pointer }
+input[type="radio"], input[type="checkbox"] { margin: 0 5px 0 0 }
+input[type="search"] { -webkit-appearance: none !important; border-radius: 0 }
+
+script, style { display: none !important }

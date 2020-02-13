@@ -1,0 +1,14 @@
+{
+	"name": "Audio Broadcast Live",
+	"short_name": "broadcast",
+	"background_color": "#3E82F7",
+	"orientation": "portrait",
+	"theme_color": "#1e88e5",
+	"display": "standalone",
+	"start_url": "/",
+	"icons": [{
+	  "src": "./favicon.png",
+	  "type": "image/png",
+	  "sizes": "128x128"
+	}]
+  }

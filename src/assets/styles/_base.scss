@@ -1,0 +1,156 @@
+/* ==========================================================================
+   Base
+   ========================================================================== */
+html {
+	color: var(--color-foreground-dark);
+	background-color: var(--color-background-dark);
+	// background-image: var(--color-background-dark);
+	height: 100%;
+	width: 100%;
+}
+
+body {
+	min-height: 100%;
+
+	&.pwa {
+		-webkit-user-select: none;
+		-webkit-tap-highlight-color: transparent;
+	}
+}
+
+body, html {
+	margin: 0;
+	padding: 0;
+}
+
+html[data-device-os="ios"] {
+	padding-top: 20px;
+}
+
+body, main {
+	position: relative;
+
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+main {
+	max-width: 100%;
+	overflow: hidden auto;
+}
+
+main > footer {
+	margin-top: auto;
+}
+
+* {
+	caret-color: var(--color-accent);
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+:focus {
+	outline-color: var(--color-accent);
+}
+
+::selection {
+	background-color: var(--color-accent);
+	color: var(--color-background);
+}
+
+.app-modal-main {
+	.modal-heading {
+		font-size: 1.3em;
+		font-weight: 600;
+		text-transform: uppercase;
+		color: var(--color-accent);
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.app-link {
+		display: inline-block;
+		color: var(--color-accent-turquoise) !important;
+		text-decoration: underline !important;
+	}
+
+	.app-form {
+		margin: auto;
+		width: 100%;
+		max-width: 17em;
+
+		label {
+			display: block;
+			font-weight: 500;
+			padding-left: 0 !important;
+			padding-right: 0 !important;
+			padding-bottom: 0 !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		input, textarea {
+			background-color: transparent;
+			border: 0;
+			outline: 0;
+			border-bottom: .1em solid rgba(255, 255, 255, .6);
+			border-radius: 0;
+			display: block;
+			width: 100%;
+			text-align: center;
+			font-style: italic;
+
+			// margin: $pd 0;
+
+			&:valid {
+				color: inherit;
+			}
+		}
+	}
+
+	.app-button {
+		width: 100%;
+	}
+}
+
+.app-heading {
+	// margin-top: $pd / 3;
+	text-transform: uppercase;
+
+	.app-title {
+		font-size: 1.3em;
+		font-weight: 600;
+	}
+}
+
+.app-button {
+	position: relative;
+	display: inline-block;
+	font-weight: 600;
+	text-transform: uppercase;
+	background-color: var(--color-accent);
+	color: var(--color-foreground-invert);
+	border: 0;
+	border-radius: var(--border-radius);
+	max-width: 17em;
+	cursor: pointer;
+
+	&[data-css-style="invert"] {
+		background-color: var(--color-foreground-invert);
+		color: var(--color-accent);
+	}
+}
+
+.app-button:active {
+	top: .1em;
+}
+
+.app-button[disabled] {
+	background-color: var(--color-foreground-secondary);
+	color: var(--color-foreground-invert);
+	pointer-events: none;
+}
+
+/* ==========================================================================
+   Animation
+   ========================================================================== */
