@@ -1,2 +1,2 @@
 clean:
-	rm -rf .cache dist
+	rm -rf .cache public

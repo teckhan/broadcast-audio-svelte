@@ -1,47 +1,45 @@
-<main class="dark">
-	<div style="margin: auto; text-align: center">
-		{#await forRTCConnection}
-			<h1>Loading...</h1>
-		{:then peer}
-			<h1>Welcome to livebroadcast!</h1>
-			<button class="app-button" on:click={ player.play }>Start</button>
-			<audio bind:this={ audio } autoplay playsinline></audio>
-			<!-- <audio id="player" controls autoplay></audio> -->
-		{:catch}
-			<h1>X_X Something bad happened.</h1>
-		{/await}
-	</div>
+<section style="margin: auto; text-align: center">
+	<audio bind:this={ audio } style="display: none !important"></audio>
+	{#await forAudioStream}
+		<h1>Loading...</h1>
+	{:then}
+		<h1>Welcome to livebroadcast!</h1>
+		<button bind:this={ playButton } class="app-button" on:click={ player.play }>Start</button>
+	{:catch}
+		<h1>Cannot connect at the moment.<br>Please try again later</h1>
+	{/await}
 
-	<a href='/404'>go 404</a>
-</main>
+	<a href="/404">go 404</a>
+	<a href="/test">go test</a>
+</section>
 
 <script context="module">
 	export const layout = 'LayoutPrimary'
 </script>
 
 <script>
+	import { onMount } from 'svelte'
+	import pRetry from 'p-retry'
+
 	const domain = process.env.API_URL
+
+	let audio
+	let playButton
+	let broadcastConnection
+	let retryCount = 0
+	const retryLimit = 10
 	const peer = new RTCPeerConnection()
-	let audio, stream
-	$: if (stream && audio.srcObject !== stream) {
-		audio.srcObject = stream
-	}
 
 	const player = {
 		play: () => {
-			console.log('PLAY!')
+			playButton.disabled = true
+			playButton.textContent = 'playing'
+			audio.play()
 		}
 	}
 
 	const RTCLib = {
-		asyncGetRemoteSdp: async ({ domain }) => {
-			try {
-				return (await (await fetch(`${domain}/sdp`)).json()).sdp
-			} catch (error) {
-				return
-			}
-		},
-		asyncGetRemoteData: async ({ domain }) => {
+		asyncGetBroadcastConnection: async ({ domain }) => {
 			try {
 				return (await (await fetch(`${domain}/sdp`)).json()).data
 			} catch (error) {
@@ -60,54 +58,53 @@
 		}
 	}
 
-	let remoteData
-	let retryCount = 0
-	const retryLimit = 10
+	const forAudioStream = new Promise(async (resolve, reject) => {
+		// get broadcast connection with 10 retries
+		broadcastConnection = await pRetry(async () => {
+			const data = await RTCLib.asyncGetBroadcastConnection({ domain })
 
-	$: {
-		if (!remoteData) {
-			if (retryCount < retryLimit) {
-				RTCLib.asyncGetRemoteData({ domain }).then((data) => {
-					if (data) {
-						remoteData = data
-					} else {
-						setTimeout(() => retryCount++, 5000)
-					}
-				})
-			} else {
-				console.log('stop trying')
+			if (!data) {
+				throw new Error('no data')
 			}
 
-		}
-	}
-	$: RTCLib.asyncAcceptSdp({ peer, sdp: remoteData ? remoteData.sdp : null })
+			return data
+		}, { retries: 10 }).catch(reject)
 
-	const forRTCConnection = new Promise(async (resolve, reject) => {
-		resolve('')
+		if (!broadcastConnection) // stop procedure if failed
+			return
+
+		// accept broadcast connection
+		await RTCLib.asyncAcceptSdp({ peer, sdp: broadcastConnection.sdp })
+
+		// await server reconfirmation
+
+		resolve()
 	})
 
-	peer.onicecandidate = async event => {
-		if (event.candidate) return
+	onMount(async () => {
+		peer.onicecandidate = async event => {
+			if (event.candidate) return
 
-		await (await fetch(`${domain}/sdp`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				id: remoteData.id,
-				sdp: peer.localDescription
-			})
-		})).json()
-	}
+			await (await fetch(`${domain}/sdp`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					id: broadcastConnection.id,
+					sdp: peer.localDescription
+				})
+			})).json()
+		}
 
-	peer.ontrack = event => {
-		stream = event.streams[0]
-	}
+		peer.ontrack = event => {
+			audio.srcObject = event.streams[0]
+		}
+	})
 </script>
 
 <style lang="scss">
-	main {
+	section {
 		padding: 2em;
 
 		h1 {

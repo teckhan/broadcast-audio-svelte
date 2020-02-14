@@ -1,8 +1,6 @@
-<main>
-	<div style="margin: auto; text-align: center">
-		Test
-	</div>
-</main>
+<section style="margin: auto; text-align: center">
+	Test
+</section>
 
 <script>
 	// import 'https://webrtc.github.io/adapter/adapter-latest.js' // global
