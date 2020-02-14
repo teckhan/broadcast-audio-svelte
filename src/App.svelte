@@ -27,10 +27,8 @@
 
 	const router = (
 		Navaid('/', p => import('~pages/404').then(m => useRoute(m, p)))
-			// .on('/', p => import('~pages/Home').then(m => useRoute(m, p)))
 			.on('/', p => import('~pages/Callee').then(m => useRoute(m, p)))
 			.on('/caller', p => import('~pages/Caller').then(m => useRoute(m, p)))
-			.on('/test', p => import('~pages/Test').then(m => useRoute(m, p)))
 	)
 
 	onMount(() => {

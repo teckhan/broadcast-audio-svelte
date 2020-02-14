@@ -1,16 +1,21 @@
 <section style="margin: auto; text-align: center">
 	<audio bind:this={ audio } style="display: none !important"></audio>
 	{#await forAudioStream}
-		<h1>Loading...</h1>
-	{:then}
 		<h1>Welcome to livebroadcast!</h1>
-		<button bind:this={ playButton } class="app-button" on:click={ player.play }>Start</button>
+		<p>Loading...</p>
+	{:then}
+		{#if !broadcastConnectionHasFailed}
+			<button bind:this={ playButton } class="app-button" on:click={ player.play }>Start</button>
+		{:else}
+			<h2>Connection Failed</h2>
+
+			<a href='javascript:window.location.reload(true)' class="app-button">Retry</a>
+		{/if}
 	{:catch}
 		<h1>Cannot connect at the moment.<br>Please try again later</h1>
-	{/await}
 
-	<a href="/404">go 404</a>
-	<a href="/test">go test</a>
+		<a href='javascript:window.location.reload(true)' class="app-button">Retry</a>
+	{/await}
 </section>
 
 <script context="module">
@@ -26,6 +31,7 @@
 	let audio
 	let playButton
 	let broadcastConnection
+	let broadcastConnectionHasFailed = false
 	let retryCount = 0
 	const retryLimit = 10
 	const peer = new RTCPeerConnection()
@@ -97,6 +103,15 @@
 			})).json()
 		}
 
+		peer.oniceconnectionstatechange = event => {
+			switch (peer.iceConnectionState) {
+				case 'disconnected': {
+					broadcastConnectionHasFailed = true
+					break;
+				}
+			}
+		}
+
 		peer.ontrack = event => {
 			audio.srcObject = event.streams[0]
 		}
@@ -107,12 +122,12 @@
 	section {
 		padding: 2em;
 
-		h1 {
+		h1, h2 {
 			margin-bottom: 1.5em;
 			font-size: 1.3em;
 		}
 
-		button {
+		button, a {
 			padding: 1em 1.5em;
 		}
 	}

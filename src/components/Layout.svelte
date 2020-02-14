@@ -19,8 +19,8 @@
 				import('~components/LayoutPrimary').then(normalizeModule).then(resolve).catch(reject)
 				break
 
-			case 'LayoutTest':
-				import('~components/LayoutTest').then(normalizeModule).then(resolve).catch(reject)
+			case 'LayoutSecondary':
+				import('~components/LayoutSecondary').then(normalizeModule).then(resolve).catch(reject)
 				break
 
 			default:
@@ -32,7 +32,7 @@
 	const loadOffline = () => {
 		try {
 			import('~components/LayoutPrimary').then(() => console.info('LayoutPrimary is loaded for offline use.'))
-			import('~components/LayoutTest').then(() => console.info('LayoutTest is loaded for offline use.'))
+			import('~components/LayoutSecondary').then(() => console.info('LayoutSecondary is loaded for offline use.'))
 		} catch (error) {}
 	}
 

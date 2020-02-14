@@ -1,152 +1,153 @@
-<main class="dark">
-	<div style="margin: auto; text-align: center">
-		<input type="password" value="abcd1234">
-		<br>
-		<button class="app-button">Start</button>
-	</div>
+<section style="margin: auto; text-align: center">
+	{#await forWSAuthentication}
+		<h1>Waiting for authentication</h1>
+	{:then}
+		{ peersCount } people { peersCount > 1 ? 'are' : 'is' } live.
+	{:catch}
+		<h2>Connection Failed</h2>
 
-	<a href='/404'>go 404</a>
-</main>
+		<a href='javascript:window.location.reload(true)' class="app-button">Retry</a>
+	{/await}
+</section>
 
 <script context="module">
 	export const layout = 'LayoutPrimary'
 </script>
 
 <script>
-	const domain = process.env.API_URL
-	const peer = new RTCPeerConnection()
+	// import 'https://webrtc.github.io/adapter/adapter-latest.js' // global
 
-	const RTCLib = {
-		asyncGetRemoteSdp: async ({ domain }) => {
-			try {
-				return (await (await fetch(`${domain}/sdp`)).json()).sdp
-			} catch (error) {
-				return
-			}
-		},
-		asyncAcceptSdp: async ({ sdp, peer }) => {
-			if (!sdp)
-				return
+	const peers = {}
+	const forStream = navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+	let peersCount = 0
+	let ws
 
-			return //
-			await peer.setRemoteDescription(sdp)
-
-			const answer = await peer.createAnswer()
-
-			peer.setLocalDescription(answer)
+	class PeerEntity {
+		constructor () {
+			this.id = PeerEntity.incrementId()
+			this.peer = new RTCPeerConnection()
 		}
-	}
 
-	let sdp
-	let retryCount = 0
-	const retryLimit = 10
+		static incrementId() {
+			if (!this.latestId) this.latestId = 1
+			else this.latestId++
+			return this.latestId
+		}
 
-	$: {
-		if (!sdp) {
-			if (retryCount < retryLimit) {
-				RTCLib.asyncGetRemoteSdp({ domain }).then((fetchedSdp) => {
-					if (fetchedSdp) {
-						sdp = fetchedSdp
-					} else {
-						setTimeout(() => retryCount++, 5000)
+		forCreate ({ forStream }) {
+			return new Promise(async (resolve, reject) => {
+				this.peer.addTrack((await forStream).getAudioTracks()[0], await forStream)
+				this.peer.setLocalDescription(await this.peer.createOffer())
+				this.peer.onicecandidate = event => {
+					if (event.candidate) return
+					resolve()
+				}
+				this.peer.oniceconnectionstatechange = event => {
+					switch (this.peer.iceConnectionState) {
+						case 'disconnected': {
+							this.peer.close()
+							this.peer = null
+							delete peers[this.id]
+							peersCount--
+							break
+						}
+
+						case 'connected': {
+							peersCount++
+							break
+						}
 					}
-				})
-			} else {
-				console.log('stop trying')
+				}
+			})
+		}
+
+		async accept ({ sdp }) {
+			this.peer.setRemoteDescription(sdp)
+		}
+	}
+
+	const asyncConnectWSServer = async (secret) => {
+		return new Promise((resolve, reject) => {
+			ws = new WebSocket(process.env.API_WS_URL)
+
+			ws.onerror = () => reject()
+
+			ws.onopen = () => {
+				ws.send(JSON.stringify({
+					type: 'AUTH',
+					secret
+				}))
 			}
 
-		}
+			ws.onmessage = async (message) => {
+				// console.log(message.data)
+				try {
+					message = JSON.parse(message.data)
+
+					switch (message.type) {
+						case 'REQUEST_SDP': {
+							const peer = new PeerEntity()
+							await peer.forCreate({ forStream })
+							peers[peer.id] = peer
+
+							ws.send(JSON.stringify({
+								secret,
+								type: 'NEW_PEER',
+								data: {
+									id: peer.id,
+									sdp: peer.peer.localDescription
+								}
+							}))
+
+							break
+						}
+
+						case 'ACCEPT_SDP': {
+							const data = message.data
+							peers[data.id].accept({ sdp: data.sdp })
+
+							break
+						}
+
+						case 'AUTH': {
+							const data = message.data
+							if (data.isAuthorized) {
+								resolve()
+							} else {
+								ws.close()
+								reject()
+							}
+							break
+						}
+					}
+				} catch (error) {}
+			}
+		})
 	}
-	$: RTCLib.asyncAcceptSdp({ sdp, peer })
 
-	// class RTCLibrary {
-	// 	constructor({ domain }) {
-	// 		this._domain = domain
-	// 		this._peer = new RTCPeerConnection()
-	// 		this._sdp = 'hello'
+	const forWSAuthentication = new Promise(async (resolve, reject) => {
+		const secret = prompt("Enter Password: ")
 
-	// 		setTimeout(() => this._sdp = 'world', 1000)
-
-	// 		console.log(this._sdp)
-	// 		setTimeout(() => console.log(this._sdp), 2000)
-	// 	}
-
-	// 	get sdp () { return this._sdp }
-	// 	set sdp (sdp) { this._sdp = sdp }
-
-	// 	async getSdp() {
-	// 		return new Promise(async (resolve, reject) => {
-	// 			const retry = () => {
-	// 				reject()
-	// 				// setTimeout(this.sdp, 3000)
-	// 				console.log('failed, retry')
-	// 			}
-
-	// 			const fetchResult = await fetch(`${this._domain}/sdp`).catch(error => { retry() })
-	// 			const result = await fetchResult.json()
-
-
-	// 			if (!result.sdp) {
-	// 				retry()
-	// 			}
-
-	// 			resolve(result.sdp)
-	// 		})
-	// 	}
-	// }
-
-	const forRTCConnection = new Promise(async (resolve, reject) => {
-		resolve('')
+		if (secret) {
+			asyncConnectWSServer(secret)
+				.then(resolve)
+				.catch(reject)
+		} else {
+			reject()
+		}
 	})
-
-	peer.oniceconnectionstatechange = event => {
-		const state = peer.iceConnectionState
-		console.info('State: ', state)
-	}
-
-	peer.onicecandidate = async event => {
-		if (event.candidate) return
-		// peer.addIceCandidate(event.candidate) // unfinished
-
-		await (await fetch(`${domain}/sdp`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				sdp: peer.localDescription
-			})
-		})).json()
-	}
-
-	peer.ondatachannel = event => {
-		channel = event.channel
-
-		channel.onmessage = event => {
-			console.log('Receipient receives: ', event.data)
-		}
-
-		channel.onopen = _ => {
-			channel.send("Sent from Receipient: Channel Established!")
-		}
-	}
-
-	peer.ontrack = event => {
-		console.log(event.stream[0])
-		// document.getElementById('player').srcObject = event.streams[0]
-	}
 </script>
 
 <style lang="scss">
-	main {
+	section {
 		padding: 2em;
 
-		h1 {
+		h2 {
 			margin-bottom: 1.5em;
 			font-size: 1.3em;
 		}
 
-		button {
+		a {
 			padding: 1em 1.5em;
 		}
 	}
