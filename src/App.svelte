@@ -29,6 +29,8 @@
 		Navaid('/', p => import('~pages/404').then(m => useRoute(m, p)))
 			.on('/', p => import('~pages/Callee').then(m => useRoute(m, p)))
 			.on('/caller', p => import('~pages/Caller').then(m => useRoute(m, p)))
+			.on('/caller-video', p => import('~pages/CallerVideo').then(m => useRoute(m, p)))
+			.on('/callee-video', p => import('~pages/CalleeVideo').then(m => useRoute(m, p)))
 	)
 
 	onMount(() => {
